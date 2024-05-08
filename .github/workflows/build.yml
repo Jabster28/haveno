@@ -24,6 +24,8 @@ jobs:
           java-version: '21'
           distribution: 'adopt'
           cache: gradle
+      - name: Agree to Gradle Terms of Service
+        run: echo "org.gradle.acceptEnterpriseTos=true" >> ~/.gradle/gradle.properties
       - name: Build with Gradle
         run: ./gradlew build --stacktrace --scan
       - name: cache nodes dependencies
