@@ -30,18 +30,6 @@ jobs:
       - name: Agree to Gradle Terms of Service
         run: mkdir -p ~/.gradle && echo "org.gradle.acceptEnterpriseTos=true" >> ~/.gradle/gradle.properties
         shell: bash
-      - name: Build with Gradle
-        run: ./gradlew build --stacktrace --scan
-      - uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: error-reports-${{ matrix.os }}
-          path: ${{ github.workspace }}/desktop/build/reports
-      - name: cache nodes dependencies
-        uses: actions/upload-artifact@v3
-        with:
-          name: cached-localnet
-          path: .localnet
       - name: Install Ubuntu dependencies
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
@@ -56,6 +44,18 @@ jobs:
           Invoke-WebRequest -Uri 'https://github.com/wixtoolset/wix3/releases/download/wix314rtm/wix314.exe' -OutFile wix314.exe
           .\wix314.exe /quiet /norestart
         shell: powershell
+      - name: Build with Gradle
+        run: ./gradlew build --stacktrace --scan
+      - uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: error-reports-${{ matrix.os }}
+          path: ${{ github.workspace }}/desktop/build/reports
+      - name: cache nodes dependencies
+        uses: actions/upload-artifact@v3
+        with:
+          name: cached-localnet
+          path: .localnet
       - name: Build Haveno Installer
         run: |
           ./gradlew clean build --refresh-keys --refresh-dependencies
