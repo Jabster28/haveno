@@ -21,6 +21,7 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' }}
         uses: Homebrew/actions/setup-homebrew@master
       - name: Set up JDK 21
+        if: ${{ matrix.os != 'macos-latest' }}
         uses: actions/setup-java@v4
         with:
           java-version: '21'
