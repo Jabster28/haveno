@@ -38,7 +38,7 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
             brew tap bell-sw/liberica
-            brew install --cask liberica-jdk15-full
+            brew install --cask liberica-jdk21-full
       - name: Install Windows dependencies
         if: ${{ matrix.os == 'windows-latest' }}
         run: |
