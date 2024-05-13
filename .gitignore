@@ -39,3 +39,4 @@ deploy
 */.factorypath
 .flatpak-builder
 *.flatpak
+desktop/package/linux/repo
