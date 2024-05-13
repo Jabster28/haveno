@@ -5,7 +5,7 @@ on:
   push:
   pull_request:
     paths-ignore:
-      - '**/README.md'
+      - "**/README.md"
 
 jobs:
   build:
@@ -21,8 +21,8 @@ jobs:
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'adopt'
+          java-version: "21"
+          distribution: "adopt"
           cache: gradle
       - name: Build with Gradle
         run: ./gradlew build --stacktrace --scan
@@ -52,6 +52,15 @@ jobs:
           ./gradlew clean build --refresh-keys --refresh-dependencies
           ./gradlew packageInstallers
         working-directory: .
+      - name: Build Flatpaks
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt install -y flatpak
+          flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          cd desktop/package/linux
+          flatpak-builder build/ exchange.haveno.Haveno.yml --force-clean
+          flatpak build-export export build
+          flatpak build-bundle export example.
       - name: Move Release Files on Unix
         if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'macos-13' }}
         run: |
