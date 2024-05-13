@@ -1,6 +1,6 @@
 id: exchange.haveno.Haveno
 runtime: org.freedesktop.Platform
-runtime-version: '23.08'
+runtime-version: "23.08"
 sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.openjdk21
@@ -36,7 +36,6 @@ modules:
       - type: file
         path: ../../src/main/resources/images/task_bar_icon_windows.png
 
-
 finish-args:
   - --env=PATH=/app/jre/bin:/usr/bin:$PATH
     # - --env=JAVA_HOME=/app/jre
@@ -48,5 +47,4 @@ finish-args:
   - --share=network
   - --share=ipc
   - --socket=x11
-
 # TODO: xdg-open fails
