@@ -11,7 +11,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest] #//, macos-13, windows-latest] TODO: rm
+        os: [ubuntu-latest, macos-13, windows-latest]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -61,6 +61,12 @@ jobs:
           flatpak-builder build/ exchange.haveno.Haveno.yml --force-clean --user --install-deps-from=flathub
           flatpak build-export export build
           flatpak build-bundle export haveno.flatpak exchange.haveno.Haveno --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+      - name: Upload Flatpak
+        uses: actions/upload-artifact@v3
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        with:
+          name: Haveno.flatpak
+          path: desktop/package/linux/haveno.flatpak
       - name: Move Release Files on Unix
         if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'macos-13' }}
         run: |
