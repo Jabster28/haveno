@@ -53,23 +53,22 @@
   <releases>
     <release version="1.0.3" date="2024-05-10">
       <description>
-        <ul></ul>
-        <li>Further optimizations based on congestion testing.</li>
-        <li>Arbitrator assigns trade fee address.</li>
-        <li>Improve resilience of trade protocol:
-          <ul>
-            <li>Reattempt wallet operations on failure.</li>
-            <li>Refactor error handling and wallet deletion.</li>
-            <li>Reset timeout at more steps.</li>
-            <li>Arbitrator nacks deposit request on error or timeout.</li>
-          </ul>
-        </li>
-        <li>Recover from deleted wallet cache.</li>
-        <li>Show reserved amount in maker's offer details.</li>
-        <li>Disable payment sent / received confirmation buttons until acked.</li>
-        <li>Remove duplicate error popups.</li>
-        <li>Update to monero-java 0.8.26.</li>
-        <li>Fix CI tests.</li>
+        <ul>
+          <li>Further optimizations based on congestion testing.</li>
+          <li>Arbitrator assigns trade fee address.</li>
+          <li>Improve resilience of trade protocol:</li>
+          <li>- Reattempt wallet operations on failure.</li>
+          <li>- Refactor error handling and wallet deletion.</li>
+          <li>- Reset timeout at more steps.</li>
+          <li>- Arbitrator nacks deposit request on error or timeout.</li>
+
+          <li>Recover from deleted wallet cache.</li>
+          <li>Show reserved amount in maker's offer details.</li>
+          <li>Disable payment sent / received confirmation buttons until acked.</li>
+          <li>Remove duplicate error popups.</li>
+          <li>Update to monero-java 0.8.26.</li>
+          <li>Fix CI tests.</li>
+        </ul>
       </description>
     </release>
     <release version="1.0.0-1" date="2024-04-14">
