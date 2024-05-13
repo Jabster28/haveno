@@ -56,11 +56,11 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           sudo apt install -y flatpak
-          flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
           cd desktop/package/linux
           flatpak-builder build/ exchange.haveno.Haveno.yml --force-clean
           flatpak build-export export build
-          flatpak build-bundle export example.
+          flatpak build-bundle export haveno.flatpak exchange.haveno.Haveno --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
       - name: Move Release Files on Unix
         if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'macos-13' }}
         run: |
