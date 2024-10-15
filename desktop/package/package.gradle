@@ -315,12 +315,12 @@ task packageInstallers {
                         " --app-version ${appVersion}" +
                         " --copyright \"${appCopyright}\"" +
                         " --vendor ${appNameAndVendor}" +
-                        " --temp \"${jpackageTempDir}\"" 
+                        " --temp \"${jpackageTempDir}\""
 
                         // Options for creating the application image
 
                         // Options for creating the application launcher
-                
+
                 // Warning: this will cause guice reflection exceptions and lead to issues with the guice internal cache
                 // resulting in the UI not loading
                 //              " --java-options -Djdk.module.illegalAccess=deny" +
@@ -352,7 +352,7 @@ task packageInstallers {
                         " --main-jar ${mainJarName}" +
                         " --main-class haveno.desktop.app.HavenoAppMain" +
 
-                " --dest \"${jpackageTempDir}\"" +
+                " --m \"${jpackageTempDir}\"" +
                 " --type app-image")
 
             // Path to the app-image directory: THIS IS NOT THE ACTUAL .AppImage FILE.
@@ -471,7 +471,7 @@ task packageInstallers {
             }
 
 
-      
+
 
 
 
