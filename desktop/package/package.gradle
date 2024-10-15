@@ -354,6 +354,7 @@ task packageInstallers {
 
                 " --dest \"${jpackageTempDir}\"" +
                 " --type app-image")
+                executeCmd("ls " jpackageTempDir + "/../")
 
             // Path to the app-image directory: THIS IS NOT THE ACTUAL .AppImage FILE.
             // See JPackage documentation on --type app-image for more.
