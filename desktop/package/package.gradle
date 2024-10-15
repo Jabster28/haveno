@@ -352,7 +352,7 @@ task packageInstallers {
                         " --main-jar ${mainJarName}" +
                         " --main-class haveno.desktop.app.HavenoAppMain" +
 
-                " -m \"${jpackageTempDir}\"" +
+                " --dest \"${jpackageTempDir}\"" +
                 " --type app-image")
 
             // Path to the app-image directory: THIS IS NOT THE ACTUAL .AppImage FILE.
