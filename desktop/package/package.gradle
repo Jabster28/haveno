@@ -206,7 +206,8 @@ task packageInstallers {
         // The jpackageTempDir stores temp files used by jpackage for building the installers
         // It can be inspected in order to troubleshoot the packaging process
         File jpackageTempDir = new File(tempRootDir, "jpackage-temp")
-        jpackageTempDir.mkdirs()
+            // jpackageTempDir.deleteDir()
+            jpackageTempDir.mkdirs()
 
         // ALL contents of this folder will be included in the resulting installers
         // However, the fat jar is the only one we need
@@ -281,7 +282,7 @@ task packageInstallers {
                         " --arguments --baseCurrencyNetwork=XMR_STAGENET"
                 // Warning: this will cause guice reflection exceptions and lead to issues with the guice internal cache
                 // resulting in the UI not loading
-//              " --java-options -Djdk.module.illegalAccess=deny" +
+        //              " --java-options -Djdk.module.illegalAccess=deny" +
         )
 
         if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -305,6 +306,25 @@ task packageInstallers {
 
             executeCmd(jPackageFilePath + commonOpts + macOpts + " --type dmg")
         } else {
+            // same as above w/o input and main-jar
+            commonOpts = new String(
+                // Generic options
+                " --dest \"${binariesFolderPath}\"" +
+                        " --name ${appNameAndVendor}" +
+                        //" --description \"${appDescription}\"" + // TODO: task managers show app description instead of name, so we disable it
+                        " --app-version ${appVersion}" +
+                        " --copyright \"${appCopyright}\"" +
+                        " --vendor ${appNameAndVendor}" +
+                        " --temp \"${jpackageTempDir}\"" 
+
+                        // Options for creating the application image
+
+                        // Options for creating the application launcher
+                
+                // Warning: this will cause guice reflection exceptions and lead to issues with the guice internal cache
+                // resulting in the UI not loading
+                //              " --java-options -Djdk.module.illegalAccess=deny" +
+            )
             String linuxOpts = new String(
                     " --icon ${project(':desktop').projectDir}/package/linux/icon.png" +
                             // This defines the first part of the resulting packages (the application name)
@@ -319,24 +339,88 @@ task packageInstallers {
                             " --linux-shortcut"
             )
 
-            // Package deb
-            executeCmd(jPackageFilePath + commonOpts + linuxOpts +
-                    " --linux-deb-maintainer noreply@haveno.exchange" +
-                    " --type deb")
-
-            // Clean jpackage temp folder, needs to be empty for the next packaging step (AppImage)
-            jpackageTempDir.deleteDir()
-            jpackageTempDir.mkdirs()
-
             executeCmd(jPackageFilePath + commonOpts +
-                    " --dest \"${jpackageTempDir}\"" +
-                    " --type app-image")
+                        " --arguments --baseCurrencyNetwork=XMR_STAGENET" +
+                        " --java-options -Xss1280k" +
+                        " --java-options -XX:MaxRAM=4g" +
+                        " --java-options --add-opens=javafx.controls/com.sun.javafx.scene.control.behavior=ALL-UNNAMED" +
+                        " --java-options --add-opens=javafx.controls/com.sun.javafx.scene.control=ALL-UNNAMED" +
+                        " --java-options --add-opens=java.base/java.lang.reflect=ALL-UNNAMED" +
+                        " --java-options --add-opens=javafx.graphics/com.sun.javafx.scene=ALL-UNNAMED" +
+                        " --java-options -Djava.net.preferIPv4Stack=true" +
+                        " --input ${fatJarFolderPath}" +
+                        " --main-jar ${mainJarName}" +
+                        " --main-class haveno.desktop.app.HavenoAppMain" +
+
+                " --dest \"${jpackageTempDir}\"" +
+                " --type app-image")
 
             // Path to the app-image directory: THIS IS NOT THE ACTUAL .AppImage FILE.
             // See JPackage documentation on --type app-image for more.
             String appImagePath = new String(
                     "\"${binariesFolderPath}/${appNameAndVendor}\""
             )
+
+
+            // Package rpm
+            executeCmd(jPackageFilePath + commonOpts + linuxOpts +
+                    " --linux-rpm-license-type AGPLv3" + // https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Good_Licenses
+                        " --app-image ${appImagePath}" +
+                    " --type rpm")
+            // Package deb
+            executeCmd(jPackageFilePath + commonOpts + linuxOpts +
+                    " --linux-deb-maintainer noreply@haveno.exchange" +
+                        " --app-image ${appImagePath}" +
+                    " --type deb")
+
+
+
+            // Define Flatpak-related properties
+            String flatpakManifestFile = 'package/linux/exchange.haveno.Haveno.yml'
+            String linuxDir = 'package/linux'
+            String flatpakOutputDir = 'package/linux/build'
+            String flatpakExportDir = "${binariesFolderPath}/fpexport"
+            String flatpakBundleFile = "${binariesFolderPath}/haveno.flatpak"
+
+            // Read the default app name from the HavenoExecutable.java file
+            def filer = file('../core/src/main/java/haveno/core/app/HavenoExecutable.java')
+            def content = filer.text
+            def matcher = Pattern.compile(/public static final String DEFAULT_APP_NAME = "(.*?)";/).matcher(content)
+            def defaultAppName = "Haveno"
+            if (matcher.find()) {
+                defaultAppName = matcher.group(1)
+            } else {
+                throw new GradleException("DEFAULT_APP_NAME not found in HavenoExecutable.java")
+            }
+            // copy the manifest to a new tmp one in the same place
+            // and add a --filesystem=.local/share/${name} to the flatpak manifest
+            def manifest = file(flatpakManifestFile)
+            def newManifest = file('exchange.haveno.Haveno.yaml')
+            newManifest.write(manifest.text.replace("- --share=network", "- --share=network\n  - --filesystem=~/.local/share/${defaultAppName}:create"))
+            flatpakManifestFile = 'exchange.haveno.Haveno.yaml'
+
+            // Command to build the Flatpak
+            exec {
+                commandLine 'flatpak-builder', '--force-clean', flatpakOutputDir, flatpakManifestFile, '--user', '--install-deps-from=flathub'
+            }
+
+            // Command to export the Flatpak
+            exec {
+                commandLine 'flatpak', 'build-export', flatpakExportDir, flatpakOutputDir
+            }
+
+            // Command to create the Flatpak bundle
+            exec {
+                commandLine 'flatpak', 'build-bundle', flatpakExportDir, flatpakBundleFile, 'exchange.haveno.Haveno', '--runtime-repo=https://flathub.org/repo/flathub.flatpakrepo'
+            }
+
+            // delete the flatpak build directory
+            delete(flatpakOutputDir)
+            delete(flatpakExportDir)
+            delete(flatpakManifestFile)
+
+            println "Flatpak package created at ${flatpakBundleFile}"
+
 
             // Which version of AppImageTool to use
             String AppImageToolVersion = "13";
@@ -387,62 +471,10 @@ task packageInstallers {
             }
 
 
-            // Clean jpackage temp folder, needs to be empty for the next packaging step (rpm)
-            jpackageTempDir.deleteDir()
-            jpackageTempDir.mkdirs()
-
-            // Package rpm
-            executeCmd(jPackageFilePath + commonOpts + linuxOpts +
-                    " --linux-rpm-license-type AGPLv3" + // https://fedoraproject.org/wiki/Licensing:Main?rd=Licensing#Good_Licenses
-                    " --type rpm")
+      
 
 
 
-            // Define Flatpak-related properties
-            String flatpakManifestFile = 'package/linux/exchange.haveno.Haveno.yml'
-            String linuxDir = 'package/linux'
-            String flatpakOutputDir = 'package/linux/build'
-            String flatpakExportDir = "${binariesFolderPath}/fpexport"
-            String flatpakBundleFile = "${binariesFolderPath}/haveno.flatpak"
-
-            // Read the default app name from the HavenoExecutable.java file
-            def filer = file('../core/src/main/java/haveno/core/app/HavenoExecutable.java')
-            def content = filer.text
-            def matcher = Pattern.compile(/public static final String DEFAULT_APP_NAME = "(.*?)";/).matcher(content)
-            def defaultAppName = "Haveno"
-            if (matcher.find()) {
-                defaultAppName = matcher.group(1)
-            } else {
-                throw new GradleException("DEFAULT_APP_NAME not found in HavenoExecutable.java")
-            }
-            // copy the manifest to a new tmp one in the same place
-            // and add a --filesystem=.local/share/${name} to the flatpak manifest
-            def manifest = file(flatpakManifestFile)
-            def newManifest = file('exchange.haveno.Haveno.yaml')
-            newManifest.write(manifest.text.replace("- --share=network", "- --share=network\n  - --filesystem=~/.local/share/${defaultAppName}:create"))
-            flatpakManifestFile = 'exchange.haveno.Haveno.yaml'
-
-            // Command to build the Flatpak
-            exec {
-                commandLine 'flatpak-builder', '--force-clean', flatpakOutputDir, flatpakManifestFile, '--user', '--install-deps-from=flathub'
-            }
-
-            // Command to export the Flatpak
-            exec {
-                commandLine 'flatpak', 'build-export', flatpakExportDir, flatpakOutputDir
-            }
-
-            // Command to create the Flatpak bundle
-            exec {
-                commandLine 'flatpak', 'build-bundle', flatpakExportDir, flatpakBundleFile, 'exchange.haveno.Haveno', '--runtime-repo=https://flathub.org/repo/flathub.flatpakrepo'
-            }
-
-            // delete the flatpak build directory
-            delete(flatpakOutputDir)
-            delete(flatpakExportDir)
-            delete(flatpakManifestFile)
-
-            println "Flatpak package created at ${flatpakBundleFile}"
         }
 
         // Env variable can be set by calling "export HAVENO_SHARED_FOLDER='Some value'"
